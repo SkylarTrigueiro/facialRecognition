@@ -12,14 +12,16 @@ pd.options.display.max_columns = 20
 #DATASET_DIR = os.path.join(PACKAGE_ROOT, 'datasets')
 #TRAINED_MODEL_DIR = os.path.join(PACKAGE_ROOT, 'trained_models')
 
-PACKAGE_ROOT = pathlib.Path(tf_ann_model.__file__).resolve().parent
+PACKAGE_ROOT = pathlib.Path(model.__file__).resolve().parent
 TRAINED_MODEL_DIR = PACKAGE_ROOT / 'trained_models'
+DATASET_DIR = PACKAGE_ROOT / 'data'
+DATA_FILE = 'subject*'
 
 
 
 # model
-MODEL_NAME = 'tf_cnn_model'
-PIPELINE_NAME = 'cnn_pipe'
+MODEL_NAME = 'model'
+PIPELINE_NAME = 'pipe'
 ENCODER_NAME = 'encoder'
 
 # ANN Parameters

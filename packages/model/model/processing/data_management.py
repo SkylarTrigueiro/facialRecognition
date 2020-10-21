@@ -9,16 +9,19 @@ _logger = logging.getLogger(__name__)
 
 def load_dataset(*, file_name: str ) -> pd.DataFrame:
     
-    _data = glob('../datasets/subject*')
+    _data = glob('../data/subject*')
     np.random.shuffle(files)
     
     return _data
 
-def prepare_data(df, train_data):
+def prepare_data(data):
 
-
+	N, H, W = len(data), 120, 160
 
     return X,y
+
+ def to_grayscale(img):
+    return img.mean(axis=-1)
 
 if __name__ == '__main__':
     
