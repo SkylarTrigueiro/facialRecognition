@@ -2,36 +2,34 @@ import pathlib
 import os
 
 import pandas as pd
-import tf_ann_model
-
-pd.options.display.max_rows=20
-pd.options.display.max_columns = 20
-
-#PWD = os.path.dirname(os.path.abspath(__file__))
-#PACKAGE_ROOT = os.path.abspath(os.path.join(PWD, '..'))
-#DATASET_DIR = os.path.join(PACKAGE_ROOT, 'datasets')
-#TRAINED_MODEL_DIR = os.path.join(PACKAGE_ROOT, 'trained_models')
+import model
 
 PACKAGE_ROOT = pathlib.Path(model.__file__).resolve().parent
 TRAINED_MODEL_DIR = PACKAGE_ROOT / 'trained_models'
 DATASET_DIR = PACKAGE_ROOT / 'data'
-DATA_FILE = 'subject*'
+DATA_FILES = 'subject*'
 
 
+# Data Parameters
+H = 120 # full size is 360
+W = 160 # full size is 480
+
+# Data Loader Parameters
+BATCH_SIZE = 1
 
 # model
-MODEL_NAME = 'model'
+MODEL_NAME = 'mymodel3.pt'
 PIPELINE_NAME = 'pipe'
 ENCODER_NAME = 'encoder'
 
-# ANN Parameters
-BATCH_SIZE = 1000
-EPOCHS = 45
+# CNN Parameters
+FEATURE_DIM = 64
+EPOCHS = 20
 
 with open(os.path.join(PACKAGE_ROOT, 'VERSION')) as version_file:
     _version = version_file.read().strip()
     
-MODEL_FILE_NAME = f'{MODEL_NAME}_{_version}.h5'
+MODEL_FILE_NAME = f'{MODEL_NAME}_{_version}.pt'
 #MODEL_PATH = os.path.join(TRAINED_MODEL_DIR, MODEL_FILE_NAME)
 
 PIPELINE_FILE_NAME = f'{PIPELINE_NAME}_{_version}.pkl'

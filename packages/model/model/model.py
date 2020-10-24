@@ -1,90 +1,49 @@
-from tensorflow.keras.callbacks import LearningRateScheduler
-from tensorflow.keras import models, layers
-from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
-from tf_ann_model.config import config
-from tf_ann_model.processing.data_management import load_dataset, prepare_data
-from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
-from sklearn.externals import joblib
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision
+import torchvision.transforms as transforms
 
-from tf_ann_model.processing.feat_eng_categ import categ_missing_encoder, rare_label_encoder, one_hot_encoder, label_encoder
-from tf_ann_model.processing.feat_eng_num import outlier_capping, ArbitraryNumberImputer
-from tf_ann_model.processing.feat_creation import feature_creation
-from tf_ann_model.processing.feat_selection import remove_constant, remove_quasi_constant, selected_drop_features, remove_correlated_features
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
+from datetime import datetime
 
-import tensorflow as tf
-
-def ann_model( input_shape=(40,), optimizer = 'adam', loss='categorical_crossentropy', metrics = 'accuracy'):
-    
-    model = models.Sequential()
-    model.add( layers.Dense(32, activation = 'relu', input_shape=(input_shape)))
-    model.add( layers.Dense(32, activation = 'relu'))
-    model.add( layers.Dense(4, activation='softmax'))
-    model.compile( optimizer=optimizer, loss=loss, metrics=[metrics])
-    
-    return model
-
-annealer = LearningRateScheduler(lambda x: 1e-3 * 0.95 ** x, verbose = 0 )
-
-checkpoint = ModelCheckpoint(config.TRAINED_MODEL_DIR,
-                             monitor='acc',
-                             verbose=1,
-                             save_best_only=True,
-                             mode='max')
-
-reduce_lr = ReduceLROnPlateau(monitor='acc',
-                              factor=0.5,
-                              patience=2,
-                              verbose=1,
-                              mode='max',
-                              min_lr=0.00001)
-
-callbacks_list = [checkpoint, reduce_lr]
-
-fe_pipe = Pipeline([
-                ('oc', outlier_capping(distribution='quantiles')),
-                ('cme2', categ_missing_encoder()),
-                ('rle', rare_label_encoder(0.0001)),                
-                ('ani', ArbitraryNumberImputer()),
-                ('sd', selected_drop_features()),
-                #('ohe', one_hot_encoder(max_labels=256)),
-                ('le', label_encoder()),
-                ('rc', remove_constant()),
-                ('rqc', remove_quasi_constant()),
-                ('rcf', remove_correlated_features()),
-                ('scaler', StandardScaler())
-            ])
-
-if config.INCLUDE_VALIDATION_DATA:
-    
-    data = load_dataset(file_name=config.TRAINING_DATA_FILE)
-    val = load_dataset(file_name=config.TESTING_DATA_FILE)
-
-    X_train, y_train = prepare_data(data, True)
-    X_val, y_val = prepare_data(val, False)
-
-
-    fe_pipe.fit( X_train, y_train )
-    X_val =fe_pipe.transform(X_val)
-
-    ann_classifier = KerasClassifier(build_fn=ann_model,
-                          batch_size= config.BATCH_SIZE,
-                          epochs=config.EPOCHS,
-                          validation_data = (X_val, y_val),
-                          verbose=1,  # progress bar - required for CI job
-                          callbacks=callbacks_list
-                          )
-    
-else:
-    
-    ann_classifier = KerasClassifier(build_fn=ann_model,
-                          batch_size= config.BATCH_SIZE,
-                          epochs=config.EPOCHS,
-                          verbose=1,  # progress bar - required for CI job
-                          callbacks=callbacks_list
-                          )
-
-if __name__ == '__main__':
-    model = ann_model()
-    model.summary()
+# build the model
+class SiameseNN(nn.Module):
+    def __init__(self,feature_dim):
+        super(SiameseNN, self).__init__()
+        
+        # define CNN featurizer
+        self.cnn = nn.Sequential(
+            nn.Conv2d(1,32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32,32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(32),
+            nn.MaxPool2d(2),
+            nn.Conv2d(32,64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64,64,kernel_size=3,padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64,128,kernel_size=3,padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(128),
+            nn.Conv2d(128,128, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.BatchNorm2d(128),
+            nn.MaxPool2d(2),
+            nn.Flatten(),  # 32 > 16 > 8 > 4
+            nn.Linear(15*20*128,256), # 120 > 60 > 30 > 15, 160>80>40>20
+            #nn.Linear(15*20*64,128), # 120 > 60 > 30 > 15, 160>80>40>20
+            nn.ReLU(),
+            nn.Linear(256, feature_dim),
+        )
+        
+    def forward(self, im1, im2):
+        feat1 = self.cnn(im1)
+        feat2 = self.cnn(im2)
+        
+        # Euclidean distance between feature 1 and feature 2
+        return torch.norm(feat1 - feat2, dim=-1)
