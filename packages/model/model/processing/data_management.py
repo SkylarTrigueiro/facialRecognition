@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 import pandas as pd
 from glob import glob
@@ -66,7 +67,7 @@ def prepare_data(data):
 	count_so_far = {}
 	train_idx = 0
 	test_idx = 0
-	images, labels = shuffle(images, labels)
+	images, labels = shuffle(images, labels, random_state=94019)
 	for img, label in zip(images, labels):
 		# increment the count
 		count_so_far[label] = count_so_far.get(label,0) + 1
@@ -138,7 +139,7 @@ def prepare_dataloader(train_images, train_labels, test_images, test_labels):
 
 	return train_positives, train_negatives, test_positives, test_negatives
 
-def train_generator(batch_size, train_positives, train_negatives):
+def train_generator(batch_size, train_images, train_positives, train_negatives):
 	# for each batch, we will send 1 pair of each subject
 	# and the same number of non-matching pairs
 	n_batches = int(np.ceil(len(train_positives) / batch_size))
@@ -187,7 +188,7 @@ def train_generator(batch_size, train_positives, train_negatives):
 			yield [x1, x2], y
 
 # same thing as the train generator except no shuffling and it uses the test set
-def test_generator(batch_size, test_positives, test_negatives):
+def test_generator(batch_size, test_images, test_positives, test_negatives):
 	n_batches = int(np.ceil(len(test_positives) / batch_size ))
 	
 	while True:

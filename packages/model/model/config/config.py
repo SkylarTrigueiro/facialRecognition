@@ -9,22 +9,21 @@ TRAINED_MODEL_DIR = PACKAGE_ROOT / 'trained_models'
 DATASET_DIR = PACKAGE_ROOT / 'data'
 DATA_FILES = 'subject*'
 
-
 # Data Parameters
 H = 120 # full size is 360
 W = 160 # full size is 480
 
 # Data Loader Parameters
-BATCH_SIZE = 1
+BATCH_SIZE = 16
 
 # model
-MODEL_NAME = 'mymodel3.pt'
+MODEL_NAME = 'newModel.pt'
 PIPELINE_NAME = 'pipe'
 ENCODER_NAME = 'encoder'
 
 # CNN Parameters
 FEATURE_DIM = 64
-EPOCHS = 20
+EPOCHS = 128
 
 with open(os.path.join(PACKAGE_ROOT, 'VERSION')) as version_file:
     _version = version_file.read().strip()
