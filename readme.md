@@ -13,7 +13,7 @@ Since we are focused on pairs of images, the size of our dataset is actually (16
 
 I divided my training using roughly a 70/30 split. To ensure that each individual person had representation in the training and testing set, I designed the split to take 3 photos taken at random from each individual's set of photos.
 
-After the split in my training set will contain have ${135 \choose 2} $ = 9045 pairs of which 15${8 \choose 2} $ = 420 are positive matches.
+After the split in my training set will contain have (135 choose 2) = 9045 pairs of which 15\*(8 choose 2) = 420 are positive matches.
 
 ## References
 
